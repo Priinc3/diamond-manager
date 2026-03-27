@@ -173,14 +173,14 @@ function DashboardContent() {
     <>
       <div className="page-header">
         <h1 className="page-title">{t('dashboard')}</h1>
-        <p className="page-subtitle">Overview of your diamond business</p>
+        <p className="page-subtitle">{t('dashboardOverview')}</p>
       </div>
 
       {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">Total People</span>
+            <span className="stat-card-label">{t('totalPeople')}</span>
             <div className="stat-card-icon accent">
               <Users size={20} />
             </div>
@@ -223,7 +223,7 @@ function DashboardContent() {
       <div className="two-col-grid" style={{ marginBottom: 24 }}>
         <div className="card" style={{ animationDelay: '200ms' }}>
           <div className="card-header">
-            <h3 className="card-title">Net Balance by Person</h3>
+            <h3 className="card-title">{t('netBalanceByPerson')}</h3>
           </div>
           <div className="card-body">
             {chartData.length > 0 ? (
@@ -273,7 +273,7 @@ function DashboardContent() {
           </div>
           <div className="card-body">
             <div className="net-balance-row" style={{ marginTop: 0 }}>
-              <span className="net-balance-label">Net Balance (They owe − I owe)</span>
+              <span className="net-balance-label">{t('netBalanceFormula')}</span>
               <span
                 className={`net-balance-value ${
                   totalReceivable - totalPayable >= 0 ? 'amount-positive' : 'amount-negative'
@@ -283,19 +283,19 @@ function DashboardContent() {
               </span>
             </div>
             <div className="net-balance-row">
-              <span className="net-balance-label">Diamonds Out (with others)</span>
+              <span className="net-balance-label">{t('diamondsOutWithOthers')}</span>
               <span className="net-balance-value" style={{ color: 'var(--info)' }}>
                 {totalDiamondsGiven} pcs
               </span>
             </div>
             <div className="net-balance-row">
-              <span className="net-balance-label">Diamonds In (with me)</span>
+              <span className="net-balance-label">{t('diamondsInWithMe')}</span>
               <span className="net-balance-value" style={{ color: 'var(--accent)' }}>
                 {totalDiamondsReceived} pcs
               </span>
             </div>
             <div className="net-balance-row">
-              <span className="net-balance-label">Net Diamond Position</span>
+              <span className="net-balance-label">{t('netDiamondPosition')}</span>
               <span
                 className={`net-balance-value ${
                   totalDiamondsGiven - totalDiamondsReceived > 0 ? 'amount-negative' : 'amount-positive'
@@ -325,7 +325,7 @@ function DashboardContent() {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Search people..."
+                placeholder={t('searchPeople')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -335,14 +335,14 @@ function DashboardContent() {
           {isLoading ? (
             <div className="loading-container">
               <div className="spinner" />
-              <p>Loading people...</p>
+              <p>{t('loadingPeople')}</p>
             </div>
           ) : filteredPeople.length === 0 ? (
             <div className="table-empty">
               <div className="table-empty-icon">
                 <Users size={40} />
               </div>
-              <p>{searchQuery ? 'No people match your search' : t('noBalanceData')}</p>
+              <p>{searchQuery ? t('noPeopleMatch') : t('noBalanceData')}</p>
             </div>
           ) : (
             <div className="people-grid">
@@ -383,23 +383,23 @@ function DashboardContent() {
                   </div>
                   <div className="person-stats">
                     <div className="person-stat">
-                      <div className="person-stat-label">They Owe Me</div>
+                      <div className="person-stat-label">{t('positiveBalance')}</div>
                       <div className="person-stat-value positive">
                         {formatCurrency(person.total_receivable)}
                       </div>
                     </div>
                     <div className="person-stat">
-                      <div className="person-stat-label">I Owe Them</div>
+                      <div className="person-stat-label">{t('negativeBalance')}</div>
                       <div className="person-stat-value negative">
                         {formatCurrency(person.total_payable)}
                       </div>
                     </div>
                     <div className="person-stat">
-                      <div className="person-stat-label">💎 Out</div>
+                      <div className="person-stat-label">💎 {t('diamondsOutLabel')}</div>
                       <div className="person-stat-value neutral">{person.diamonds_given}</div>
                     </div>
                     <div className="person-stat">
-                      <div className="person-stat-label">💎 In</div>
+                      <div className="person-stat-label">💎 {t('diamondsInLabel')}</div>
                       <div className="person-stat-value neutral">{person.diamonds_received}</div>
                     </div>
                   </div>
