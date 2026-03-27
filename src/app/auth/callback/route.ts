@@ -3,9 +3,14 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/';
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
+  const next = requestUrl.searchParams.get('next') ?? '/';
+
+  // Robust origin detection for Vercel/proxies
+  const host = request.headers.get('x-forwarded-host') ?? requestUrl.host;
+  const protocol = request.headers.get('x-forwarded-proto') ?? (host.includes('localhost') ? 'http' : 'https');
+  const origin = `${protocol}://${host}`;
 
   if (code) {
     const cookieStore = await cookies();

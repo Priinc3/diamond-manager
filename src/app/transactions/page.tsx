@@ -143,7 +143,7 @@ function TransactionsContent() {
     <>
       <div className="page-header">
         <h1 className="page-title">{t('transactions')}</h1>
-        <p className="page-subtitle">Record money and diamond transactions</p>
+        <p className="page-subtitle">{t('transactionSubtitle') || 'Record money and diamond transactions'}</p>
       </div>
 
       {/* Tabs */}
@@ -283,7 +283,7 @@ function TransactionsContent() {
               {filteredMoney.length === 0 ? (
                 <div className="table-empty">
                   <Banknote size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
-                  <p>No money transactions yet</p>
+                  <p>{t('noMoneyTransactions')}</p>
                 </div>
               ) : (
                 filteredMoney.map((trans) => (
@@ -506,8 +506,8 @@ function AddMoneyModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!personId) { toast.error('Select a person'); return; }
-    if (!amount || Number(amount) <= 0) { toast.error('Enter a valid amount'); return; }
+    if (!personId) { toast.error(t('selectPersonToast')); return; }
+    if (!amount || Number(amount) <= 0) { toast.error(t('enterAmountToast')); return; }
 
     try {
       setIsSaving(true);
@@ -639,9 +639,9 @@ function AddDiamondModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!personId) { toast.error('Select a person'); return; }
-    if (!diamondTypeId) { toast.error('Select a diamond type'); return; }
-    if (!quantity || Number(quantity) <= 0) { toast.error('Enter valid quantity'); return; }
+    if (!personId) { toast.error(t('selectPersonToast')); return; }
+    if (!diamondTypeId) { toast.error(t('selectDiamondTypeToast')); return; }
+    if (!quantity || Number(quantity) <= 0) { toast.error(t('enterQuantityToast')); return; }
 
     try {
       setIsSaving(true);
@@ -694,7 +694,7 @@ function AddDiamondModal({
               </select>
               {diamondTypes.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--warning)', marginTop: 4 }}>
-                  No diamond types yet. Add them in Settings first.
+                  {t('noDiamondTypesWarning') || 'No diamond types yet. Add them in Settings first.'}
                 </p>
               )}
             </div>

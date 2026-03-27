@@ -53,7 +53,7 @@ function SettingsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     fetchTypes();
@@ -64,11 +64,11 @@ function SettingsContent() {
     try {
       const { error } = await supabase.from('diamond_types').delete().eq('id', id);
       if (error) throw error;
-      toast.success(t('delete') + ' successful');
+      toast.success(`${t('delete')} ${t('successful')}`);
       fetchTypes();
     } catch (error) {
       console.error('Delete error:', error);
-      toast.error(t('delete') + ' failed');
+      toast.error(`${t('delete')} ${t('failed')}`);
     }
   };
 
@@ -186,11 +186,11 @@ function SettingsContent() {
         <div className="card animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <div className="card-header">
             <h3 className="card-title">
-              Diamond Types ({diamondTypes.length})
+              {t('diamondTypesCount')} ({diamondTypes.length})
             </h3>
             <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
               <Plus size={16} />
-              Add Type
+              {t('addType')}
             </button>
           </div>
           <div className="card-body">
@@ -204,7 +204,7 @@ function SettingsContent() {
                 <div className="table-empty-icon">
                   <Diamond size={40} />
                 </div>
-                <p>No diamond types yet. Add your first type!</p>
+                <p>{t('noDiamondTypesYet')}</p>
               </div>
             ) : (
               <>
@@ -236,7 +236,7 @@ function SettingsContent() {
                           </td>
                           <td>
                             <span className="badge badge-warning">
-                              0 uses
+                              0 {t('uses')}
                             </span>
                           </td>
                           <td>
@@ -269,7 +269,7 @@ function SettingsContent() {
                           </div>
                         </div>
                         <span className="badge badge-warning">
-                          0 uses
+                          0 {t('uses')}
                         </span>
                       </div>
                       <div className="mobile-card-body">
@@ -278,7 +278,7 @@ function SettingsContent() {
                         </div>
                       </div>
                       <div className="mobile-card-footer">
-                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>ID: {type.id.slice(0, 8)}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t('id')}: {type.id.slice(0, 8)}</span>
                         <div className="table-actions">
                           <button onClick={() => setEditType(type)}>
                             <Edit3 size={16} />
@@ -343,7 +343,7 @@ function DiamondTypeModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error(t('name') + ' is required');
+      toast.error(`${t('name')} ${t('requiredField')}`);
       return;
     }
     try {
@@ -354,18 +354,18 @@ function DiamondTypeModal({
           .update({ name: name.trim(), shape, size, quality, description })
           .eq('id', diamondType.id);
         if (error) throw error;
-        toast.success(t('save') + ' successful');
+        toast.success(`${t('save')} ${t('successful')}`);
       } else {
         const { error } = await supabase
           .from('diamond_types')
           .insert({ name: name.trim(), shape, size, quality, description, user_id: userId });
         if (error) throw error;
-        toast.success(t('save') + ' successful');
+        toast.success(`${t('save')} ${t('successful')}`);
       }
       onSaved();
     } catch (error) {
       console.error('Save error:', error);
-      toast.error(t('save') + ' failed');
+      toast.error(`${t('save')} ${t('failed')}`);
     } finally {
       setIsSaving(false);
     }
@@ -429,7 +429,7 @@ function DiamondTypeModal({
             <div className="form-actions">
               <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                {isSaving ? t('loading') : diamondType ? t('save') : `${t('add')} ${t('type')}`}
+                {isSaving ? t('loading') : diamondType ? t('save') : t('addType')}
               </button>
             </div>
           </form>

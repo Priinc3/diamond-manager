@@ -452,7 +452,7 @@ function PersonModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Name is required');
+      toast.error(`${t('name')} ${t('requiredField')}`);
       return;
     }
     try {
@@ -463,18 +463,18 @@ function PersonModal({
           .update({ name: name.trim(), phone, email, notes })
           .eq('id', person.id);
         if (error) throw error;
-        toast.success('Person updated');
+        toast.success(`${t('person')} ${t('updated')}`);
       } else {
         const { error } = await supabase
           .from('people')
           .insert({ name: name.trim(), phone, email, notes, user_id: userId });
         if (error) throw error;
-        toast.success('Person added');
+        toast.success(`${t('person')} ${t('added')}`);
       }
       onSaved();
     } catch (error) {
       console.error('Save person error:', error);
-      toast.error('Failed to save person');
+      toast.error(`${t('save')} ${t('person')} ${t('failed')}`);
     } finally {
       setIsSaving(false);
     }
@@ -496,7 +496,7 @@ function PersonModal({
               <input
                 type="text"
                 className="form-input"
-                placeholder="Enter name"
+                placeholder={t('selectPerson') === 'Select Person' ? 'Enter name' : t('selectPerson')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -504,31 +504,31 @@ function PersonModal({
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Phone</label>
+                <label className="form-label">{t('phone')}</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Phone number"
+                  placeholder={t('phone')}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Email</label>
+                <label className="form-label">{t('email')}</label>
                 <input
                   type="email"
                   className="form-input"
-                  placeholder="Email address"
+                  placeholder={t('email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Notes</label>
+              <label className="form-label">{t('notes')}</label>
               <textarea
                 className="form-textarea"
-                placeholder="Any notes..."
+                placeholder={t('optionalNote')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />

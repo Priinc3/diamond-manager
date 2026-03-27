@@ -48,9 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectTo = typeof window !== 'undefined' 
-        ? `${window.location.origin}/auth/callback` 
-        : `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`;
+      const origin = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : (process.env.NEXT_PUBLIC_SITE_URL || 'https://diamond-manager-beta.vercel.app');
+        
+      const redirectTo = `${origin}/auth/callback`;
         
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
