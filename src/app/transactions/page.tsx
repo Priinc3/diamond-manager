@@ -1,0 +1,775 @@
+'use client';
+
+import AppShell from '@/components/AppShell';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { Person, DiamondType, MoneyTransaction, DiamondTransaction } from '@/lib/types';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  Plus,
+  Search,
+  Trash2,
+  X,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Diamond,
+  Banknote,
+  Calendar,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export default function TransactionsPage() {
+  return (
+    <AppShell>
+      <TransactionsContent />
+    </AppShell>
+  );
+}
+
+function TransactionsContent() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'money' | 'diamond'>('money');
+  const [people, setPeople] = useState<Person[]>([]);
+  const [diamondTypes, setDiamondTypes] = useState<DiamondType[]>([]);
+  const [moneyTransactions, setMoneyTransactions] = useState<MoneyTransaction[]>([]);
+  const [diamondTransactions, setDiamondTransactions] = useState<DiamondTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPerson, setFilterPerson] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+
+      const [peopleRes, typesRes, moneyRes, diamondRes] = await Promise.all([
+        supabase.from('people').select('*').eq('user_id', user.id).order('name'),
+        supabase.from('diamond_types').select('*').eq('user_id', user.id).order('name'),
+        supabase.from('money_transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+        supabase.from('diamond_transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+      ]);
+
+      if (peopleRes.error) throw peopleRes.error;
+      if (typesRes.error) throw typesRes.error;
+      if (moneyRes.error) throw moneyRes.error;
+      if (diamondRes.error) throw diamondRes.error;
+
+      setPeople(peopleRes.data || []);
+      setDiamondTypes(typesRes.data || []);
+      setMoneyTransactions(moneyRes.data || []);
+      setDiamondTransactions(diamondRes.data || []);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      toast.error('Failed to load transactions');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const getPersonName = (personId: string) => {
+    return people.find((p) => p.id === personId)?.name || 'Unknown';
+  };
+
+  const getDiamondTypeName = (typeId: string) => {
+    return diamondTypes.find((t) => t.id === typeId)?.name || 'Unknown';
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const handleDeleteMoney = async (id: string) => {
+    if (!confirm('Delete this transaction?')) return;
+    try {
+      const { error } = await supabase.from('money_transactions').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Transaction deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete');
+    }
+  };
+
+  const handleDeleteDiamond = async (id: string) => {
+    if (!confirm('Delete this transaction?')) return;
+    try {
+      const { error } = await supabase.from('diamond_transactions').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Transaction deleted');
+      fetchData();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete');
+    }
+  };
+
+  const filteredMoney = moneyTransactions.filter((t) => {
+    const personName = getPersonName(t.person_id).toLowerCase();
+    const matchesSearch = personName.includes(searchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPerson = !filterPerson || t.person_id === filterPerson;
+    return matchesSearch && matchesPerson;
+  });
+
+  const filteredDiamonds = diamondTransactions.filter((t) => {
+    const personName = getPersonName(t.person_id).toLowerCase();
+    const matchesSearch = personName.includes(searchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPerson = !filterPerson || t.person_id === filterPerson;
+    return matchesSearch && matchesPerson;
+  });
+
+  return (
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Transactions</h1>
+        <p className="page-subtitle">Record money and diamond transactions</p>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'money' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('money')}
+          >
+            <Banknote size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+            Money
+          </button>
+          <button
+            className={`tab ${activeTab === 'diamond' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('diamond')}
+          >
+            <Diamond size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+            Diamonds
+          </button>
+        </div>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => setShowAddModal(true)}
+          disabled={people.length === 0}
+        >
+          <Plus size={16} />
+          Add {activeTab === 'money' ? 'Money' : 'Diamond'} Transaction
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="filter-bar">
+        <div className="search-input-wrapper">
+          <Search size={16} />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search transactions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <select
+          className="form-select"
+          style={{ width: 'auto', minWidth: 160 }}
+          value={filterPerson}
+          onChange={(e) => setFilterPerson(e.target.value)}
+        >
+          <option value="">All People</option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Content */}
+      <div className="card">
+        {isLoading ? (
+          <div className="loading-container">
+            <div className="spinner" />
+            <p>Loading transactions...</p>
+          </div>
+        ) : activeTab === 'money' ? (
+          <>
+            {/* DESKTOP TABLE */}
+            <div className="table-wrapper desktop-table-only">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Person</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMoney.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="table-empty">
+                          <Banknote size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
+                          <p>No money transactions yet</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMoney.map((t) => (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Calendar size={14} color="var(--text-tertiary)" />
+                            {formatDate(t.date)}
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 500 }}>{getPersonName(t.person_id)}</span>
+                        </td>
+                        <td>
+                          {t.type === 'receivable' ? (
+                            <span className="badge badge-success">
+                              <ArrowDownLeft size={12} style={{ marginRight: 4 }} />
+                              They Owe Me
+                            </span>
+                          ) : (
+                            <span className="badge badge-danger">
+                              <ArrowUpRight size={12} style={{ marginRight: 4 }} />
+                              I Owe Them
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`amount ${t.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`}>
+                            {formatCurrency(Number(t.amount))}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                          {t.description || '—'}
+                        </td>
+                        <td>
+                          <div className="table-actions">
+                            <button className="delete-btn" onClick={() => handleDeleteMoney(t.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* MOBILE LIST */}
+            <div className="mobile-list-view mobile-list-only">
+              {filteredMoney.length === 0 ? (
+                <div className="table-empty">
+                  <Banknote size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <p>No money transactions yet</p>
+                </div>
+              ) : (
+                filteredMoney.map((t) => (
+                  <div key={t.id} className="mobile-card">
+                    <div className="mobile-card-header">
+                      <div>
+                        <div className="mobile-card-title">{getPersonName(t.person_id)}</div>
+                        <div className="mobile-card-subtitle">
+                          <Calendar size={12} /> {formatDate(t.date)}
+                        </div>
+                      </div>
+                      {t.type === 'receivable' ? (
+                        <span className="badge badge-success">They Owe Me</span>
+                      ) : (
+                        <span className="badge badge-danger">I Owe Them</span>
+                      )}
+                    </div>
+                    <div className="mobile-card-body">
+                      <div>
+                        <span className={`amount ${t.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`} style={{ fontSize: 18 }}>
+                          {formatCurrency(Number(t.amount))}
+                        </span>
+                        {t.description && (
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+                            {t.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mobile-card-footer">
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>ID: {t.id.slice(0, 8)}</span>
+                      <div className="table-actions">
+                        <button className="delete-btn" onClick={() => handleDeleteMoney(t.id)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* DESKTOP TABLE */}
+            <div className="table-wrapper desktop-table-only">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Person</th>
+                    <th>Type</th>
+                    <th>Diamond</th>
+                    <th>Qty</th>
+                    <th>Weight</th>
+                    <th>Description</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDiamonds.length === 0 ? (
+                    <tr>
+                      <td colSpan={8}>
+                        <div className="table-empty">
+                          <Diamond size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
+                          <p>No diamond transactions yet</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDiamonds.map((t) => (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Calendar size={14} color="var(--text-tertiary)" />
+                            {formatDate(t.date)}
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 500 }}>{getPersonName(t.person_id)}</span>
+                        </td>
+                        <td>
+                          {t.type === 'given' ? (
+                            <span className="badge badge-warning">
+                              <ArrowUpRight size={12} style={{ marginRight: 4 }} />
+                              Given
+                            </span>
+                          ) : (
+                            <span className="badge badge-info">
+                              <ArrowDownLeft size={12} style={{ marginRight: 4 }} />
+                              Received
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="badge badge-accent">{getDiamondTypeName(t.diamond_type_id)}</span>
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{t.quantity}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{t.weight ? `${t.weight} ct` : '—'}</td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                          {t.description || '—'}
+                        </td>
+                        <td>
+                          <div className="table-actions">
+                            <button className="delete-btn" onClick={() => handleDeleteDiamond(t.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* MOBILE LIST */}
+            <div className="mobile-list-view mobile-list-only">
+              {filteredDiamonds.length === 0 ? (
+                <div className="table-empty">
+                  <Diamond size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <p>No diamond transactions yet</p>
+                </div>
+              ) : (
+                filteredDiamonds.map((t) => (
+                  <div key={t.id} className="mobile-card">
+                    <div className="mobile-card-header">
+                      <div>
+                        <div className="mobile-card-title">{getPersonName(t.person_id)}</div>
+                        <div className="mobile-card-subtitle">
+                          <Calendar size={12} /> {formatDate(t.date)}
+                        </div>
+                      </div>
+                      {t.type === 'given' ? (
+                        <span className="badge badge-warning">Given</span>
+                      ) : (
+                        <span className="badge badge-info">Received</span>
+                      )}
+                    </div>
+                    <div className="mobile-card-body">
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
+                          {t.quantity} pcs
+                          {t.weight ? ` · ${t.weight} ct` : ''}
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <span className="badge badge-accent">{getDiamondTypeName(t.diamond_type_id)}</span>
+                        </div>
+                        {t.description && (
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 8 }}>
+                            {t.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mobile-card-footer">
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>ID: {t.id.slice(0, 8)}</span>
+                      <div className="table-actions">
+                        <button className="delete-btn" onClick={() => handleDeleteDiamond(t.id)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Add Transaction Modal */}
+      {showAddModal && (
+        activeTab === 'money' ? (
+          <AddMoneyModal
+            people={people}
+            userId={user?.id || ''}
+            onClose={() => setShowAddModal(false)}
+            onSaved={() => {
+              setShowAddModal(false);
+              fetchData();
+            }}
+          />
+        ) : (
+          <AddDiamondModal
+            people={people}
+            diamondTypes={diamondTypes}
+            userId={user?.id || ''}
+            onClose={() => setShowAddModal(false)}
+            onSaved={() => {
+              setShowAddModal(false);
+              fetchData();
+            }}
+          />
+        )
+      )}
+    </>
+  );
+}
+
+// ——— Add Money Transaction Modal ———
+function AddMoneyModal({
+  people,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  people: Person[];
+  userId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [personId, setPersonId] = useState('');
+  const [type, setType] = useState<'receivable' | 'payable'>('receivable');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personId) { toast.error('Select a person'); return; }
+    if (!amount || Number(amount) <= 0) { toast.error('Enter a valid amount'); return; }
+
+    try {
+      setIsSaving(true);
+      const { error } = await supabase.from('money_transactions').insert({
+        person_id: personId,
+        type,
+        amount: Number(amount),
+        description,
+        date,
+        user_id: userId,
+      });
+      if (error) throw error;
+      toast.success('Money transaction added');
+      onSaved();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to add transaction');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Add Money Transaction</h3>
+          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label">Person *</label>
+              <select className="form-select" value={personId} onChange={(e) => setPersonId(e.target.value)}>
+                <option value="">Select person</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Type *</label>
+              <div className="tabs" style={{ width: '100%' }}>
+                <button
+                  type="button"
+                  className={`tab ${type === 'receivable' ? 'tab-active' : ''}`}
+                  style={{ flex: 1 }}
+                  onClick={() => setType('receivable')}
+                >
+                  They Owe Me
+                </button>
+                <button
+                  type="button"
+                  className={`tab ${type === 'payable' ? 'tab-active' : ''}`}
+                  style={{ flex: 1 }}
+                  onClick={() => setType('payable')}
+                >
+                  I Owe Them
+                </button>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Amount (₹) *</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Date *</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Optional note..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="form-actions">
+              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Add Transaction'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ——— Add Diamond Transaction Modal ———
+function AddDiamondModal({
+  people,
+  diamondTypes,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  people: Person[];
+  diamondTypes: DiamondType[];
+  userId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [personId, setPersonId] = useState('');
+  const [diamondTypeId, setDiamondTypeId] = useState('');
+  const [type, setType] = useState<'given' | 'received'>('given');
+  const [quantity, setQuantity] = useState('');
+  const [weight, setWeight] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personId) { toast.error('Select a person'); return; }
+    if (!diamondTypeId) { toast.error('Select a diamond type'); return; }
+    if (!quantity || Number(quantity) <= 0) { toast.error('Enter valid quantity'); return; }
+
+    try {
+      setIsSaving(true);
+      const { error } = await supabase.from('diamond_transactions').insert({
+        person_id: personId,
+        diamond_type_id: diamondTypeId,
+        type,
+        quantity: Number(quantity),
+        weight: weight ? Number(weight) : null,
+        description,
+        date,
+        user_id: userId,
+      });
+      if (error) throw error;
+      toast.success('Diamond transaction added');
+      onSaved();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to add transaction');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Add Diamond Transaction</h3>
+          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label">Person *</label>
+              <select className="form-select" value={personId} onChange={(e) => setPersonId(e.target.value)}>
+                <option value="">Select person</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Diamond Type *</label>
+              <select className="form-select" value={diamondTypeId} onChange={(e) => setDiamondTypeId(e.target.value)}>
+                <option value="">Select type</option>
+                {diamondTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}{t.shape ? ` — ${t.shape}` : ''}{t.size ? ` (${t.size})` : ''}
+                  </option>
+                ))}
+              </select>
+              {diamondTypes.length === 0 && (
+                <p style={{ fontSize: 12, color: 'var(--warning)', marginTop: 4 }}>
+                  No diamond types yet. Add them in Settings first.
+                </p>
+              )}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Type *</label>
+              <div className="tabs" style={{ width: '100%' }}>
+                <button
+                  type="button"
+                  className={`tab ${type === 'given' ? 'tab-active' : ''}`}
+                  style={{ flex: 1 }}
+                  onClick={() => setType('given')}
+                >
+                  Given (They Have Mine)
+                </button>
+                <button
+                  type="button"
+                  className={`tab ${type === 'received' ? 'tab-active' : ''}`}
+                  style={{ flex: 1 }}
+                  onClick={() => setType('received')}
+                >
+                  Received (I Have Theirs)
+                </button>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Quantity *</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="0"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  min="0"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Weight (carats)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="Optional"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Date *</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Optional note..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-actions">
+              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Add Transaction'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
