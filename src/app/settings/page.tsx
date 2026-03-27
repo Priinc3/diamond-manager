@@ -15,7 +15,9 @@ import {
   Palette,
   Ruler,
   Award,
+  Languages,
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
@@ -27,6 +29,7 @@ export default function SettingsPage() {
 }
 
 function SettingsContent() {
+  const { t, language, setLanguage } = useLanguage();
   const { user } = useAuth();
   const [diamondTypes, setDiamondTypes] = useState<DiamondType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +49,7 @@ function SettingsContent() {
       setDiamondTypes(data || []);
     } catch (error) {
       console.error('Fetch error:', error);
-      toast.error('Failed to load diamond types');
+      toast.error(t('loading'));
     } finally {
       setIsLoading(false);
     }
@@ -57,15 +60,15 @@ function SettingsContent() {
   }, [fetchTypes]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this diamond type? Existing transactions using it will remain.')) return;
+    if (!confirm(t('delete') + '?')) return;
     try {
       const { error } = await supabase.from('diamond_types').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Diamond type deleted');
+      toast.success(t('delete') + ' successful');
       fetchTypes();
     } catch (error) {
       console.error('Delete error:', error);
-      toast.error('Failed to delete');
+      toast.error(t('delete') + ' failed');
     }
   };
 
@@ -90,13 +93,60 @@ function SettingsContent() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Manage diamond types and configurations</p>
+        <h1 className="page-title">{t('settings')}</h1>
+        <p className="page-subtitle">{t('manageDiamondTypes')}</p>
       </div>
 
       <div className="settings-grid">
-        {/* Left Panel - Info */}
+        {/* Left Panel - Language */}
         <div className="card animate-fade-in-up">
+          <div className="card-body">
+            <div style={{
+              width: 64,
+              height: 64,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 20,
+              color: 'var(--accent)',
+            }}>
+              <Languages size={28} />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{t('language')}</h3>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
+              {t('selectLanguage')}
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button 
+                className={`tab ${language === 'en' ? 'tab-active' : ''}`}
+                style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+                onClick={() => setLanguage('en')}
+              >
+                English
+              </button>
+              <button 
+                className={`tab ${language === 'gu' ? 'tab-active' : ''}`}
+                style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+                onClick={() => setLanguage('gu')}
+              >
+                ગુજરાતી (Gujarati)
+              </button>
+              <button 
+                className={`tab ${language === 'hi' ? 'tab-active' : ''}`}
+                style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+                onClick={() => setLanguage('hi')}
+              >
+                हिन्दी (Hindi)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Middle Panel - Info */}
+        <div className="card animate-fade-in-up" style={{ animationDelay: '50ms' }}>
           <div className="card-body">
             <div style={{
               width: 64,
@@ -111,22 +161,22 @@ function SettingsContent() {
             }}>
               <Gem size={28} />
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Diamond Types</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{t('diamondTypes')}</h3>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-              Configure the types of diamonds you deal with. These will appear as options when recording diamond transactions.
+              {t('manageDiamondTypes')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Palette size={16} color="var(--text-tertiary)" />
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Define shape, size, and quality</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('defineShapeSize')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Ruler size={16} color="var(--text-tertiary)" />
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Track different grades & sizes</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('trackGrades')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Award size={16} color="var(--text-tertiary)" />
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Used in diamond transactions</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('usedInTransactions')}</span>
               </div>
             </div>
           </div>
@@ -163,11 +213,11 @@ function SettingsContent() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Name</th>
-                        <th>Shape</th>
-                        <th>Size/Weight</th>
-                        <th>Color/Clarity</th>
-                        <th>Count</th>
+                        <th>{t('name') || 'Name'}</th>
+                        <th>{t('shape')}</th>
+                        <th>{t('size')}</th>
+                        <th>{t('colorClarity')}</th>
+                        <th>{t('count')}</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -279,6 +329,7 @@ function DiamondTypeModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useLanguage();
   const [name, setName] = useState(diamondType?.name || '');
   const [shape, setShape] = useState(diamondType?.shape || '');
   const [size, setSize] = useState(diamondType?.size || '');
@@ -292,7 +343,7 @@ function DiamondTypeModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Name is required');
+      toast.error(t('name') + ' is required');
       return;
     }
     try {
@@ -303,18 +354,18 @@ function DiamondTypeModal({
           .update({ name: name.trim(), shape, size, quality, description })
           .eq('id', diamondType.id);
         if (error) throw error;
-        toast.success('Diamond type updated');
+        toast.success(t('save') + ' successful');
       } else {
         const { error } = await supabase
           .from('diamond_types')
           .insert({ name: name.trim(), shape, size, quality, description, user_id: userId });
         if (error) throw error;
-        toast.success('Diamond type added');
+        toast.success(t('save') + ' successful');
       }
       onSaved();
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save');
+      toast.error(t('save') + ' failed');
     } finally {
       setIsSaving(false);
     }
@@ -324,13 +375,13 @@ function DiamondTypeModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">{diamondType ? 'Edit Diamond Type' : 'Add Diamond Type'}</h3>
+          <h3 className="modal-title">{diamondType ? `${t('edit')} ${t('diamond')} ${t('type')}` : `${t('add')} ${t('diamond')} ${t('type')}`}</h3>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Name *</label>
+              <label className="form-label">{t('name') || 'Name'} *</label>
               <input
                 type="text"
                 className="form-input"
@@ -342,22 +393,22 @@ function DiamondTypeModal({
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Shape</label>
+                <label className="form-label">{t('shape')}</label>
                 <select className="form-select" value={shape} onChange={(e) => setShape(e.target.value)}>
-                  <option value="">Select shape</option>
+                  <option value="">{t('selectType')}</option>
                   {shapes.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Quality / Clarity</label>
+                <label className="form-label">{t('colorClarity')}</label>
                 <select className="form-select" value={quality} onChange={(e) => setQuality(e.target.value)}>
-                  <option value="">Select quality</option>
+                  <option value="">{t('selectType')}</option>
                   {qualities.map((q) => <option key={q} value={q}>{q}</option>)}
                 </select>
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Size</label>
+              <label className="form-label">{t('size')}</label>
               <input
                 type="text"
                 className="form-input"
@@ -367,18 +418,18 @@ function DiamondTypeModal({
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Description</label>
+              <label className="form-label">{t('description')}</label>
               <textarea
                 className="form-textarea"
-                placeholder="Additional details..."
+                placeholder={t('optionalNote')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
             <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                {isSaving ? 'Saving...' : diamondType ? 'Update' : 'Add Type'}
+                {isSaving ? t('loading') : diamondType ? t('save') : `${t('add')} ${t('type')}`}
               </button>
             </div>
           </form>

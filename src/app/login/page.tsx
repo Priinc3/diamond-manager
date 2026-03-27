@@ -4,9 +4,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Diamond } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function LoginPage() {
   const { user, isLoading, signInWithGoogle } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -31,9 +33,9 @@ export default function LoginPage() {
         <div className="login-icon">
           <Diamond size={48} strokeWidth={1.5} />
         </div>
-        <h1 className="login-title">Diamond Manager</h1>
+        <h1 className="login-title">{t('diamondManager')}</h1>
         <p className="login-subtitle">
-          Manage your diamond business transactions, stock, and contacts — all in one place.
+          {t('loginSubtitle') || 'Manage your diamond business transactions, stock, and contacts — all in one place.'}
         </p>
 
         <button
@@ -58,11 +60,11 @@ export default function LoginPage() {
               fill="#EA4335"
             />
           </svg>
-          Sign in with Google
+          {t('signInWithGoogle') || 'Sign in with Google'}
         </button>
 
         <p className="login-footer">
-          Secure login powered by Supabase
+          {t('secureLogin') || 'Secure login powered by Supabase'}
         </p>
       </div>
     </div>

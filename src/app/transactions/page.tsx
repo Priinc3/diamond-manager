@@ -17,6 +17,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function TransactionsPage() {
   return (
@@ -28,6 +29,7 @@ export default function TransactionsPage() {
 
 function TransactionsContent() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'money' | 'diamond'>('money');
   const [people, setPeople] = useState<Person[]>([]);
   const [diamondTypes, setDiamondTypes] = useState<DiamondType[]>([]);
@@ -140,7 +142,7 @@ function TransactionsContent() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Transactions</h1>
+        <h1 className="page-title">{t('transactions')}</h1>
         <p className="page-subtitle">Record money and diamond transactions</p>
       </div>
 
@@ -152,14 +154,14 @@ function TransactionsContent() {
             onClick={() => setActiveTab('money')}
           >
             <Banknote size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
-            Money
+            {t('money')}
           </button>
           <button
             className={`tab ${activeTab === 'diamond' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('diamond')}
           >
             <Diamond size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
-            Diamonds
+            {t('diamonds')}
           </button>
         </div>
         <button
@@ -168,7 +170,7 @@ function TransactionsContent() {
           disabled={people.length === 0}
         >
           <Plus size={16} />
-          Add {activeTab === 'money' ? 'Money' : 'Diamond'} Transaction
+          {t('add')} {activeTab === 'money' ? t('money') : t('diamonds')} {t('transaction')}
         </button>
       </div>
 
@@ -179,7 +181,7 @@ function TransactionsContent() {
           <input
             type="text"
             className="search-input"
-            placeholder="Search transactions..."
+            placeholder={t('searchTransactions')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -190,7 +192,7 @@ function TransactionsContent() {
           value={filterPerson}
           onChange={(e) => setFilterPerson(e.target.value)}
         >
-          <option value="">All People</option>
+          <option value="">{t('allPeople')}</option>
           {people.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
@@ -202,7 +204,7 @@ function TransactionsContent() {
         {isLoading ? (
           <div className="loading-container">
             <div className="spinner" />
-            <p>Loading transactions...</p>
+            <p>{t('loadingTransactions')}</p>
           </div>
         ) : activeTab === 'money' ? (
           <>
@@ -211,11 +213,11 @@ function TransactionsContent() {
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Person</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Description</th>
+                    <th>{t('date')}</th>
+                    <th>{t('person')}</th>
+                    <th>{t('type')}</th>
+                    <th>{t('amount')}</th>
+                    <th>{t('description')}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -225,46 +227,46 @@ function TransactionsContent() {
                       <td colSpan={6}>
                         <div className="table-empty">
                           <Banknote size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
-                          <p>No money transactions yet</p>
+                          <p>{t('noMoneyTransactions')}</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredMoney.map((t) => (
-                      <tr key={t.id}>
+                    filteredMoney.map((trans) => (
+                      <tr key={trans.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Calendar size={14} color="var(--text-tertiary)" />
-                            {formatDate(t.date)}
+                            {formatDate(trans.date)}
                           </div>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 500 }}>{getPersonName(t.person_id)}</span>
+                          <span style={{ fontWeight: 500 }}>{getPersonName(trans.person_id)}</span>
                         </td>
                         <td>
-                          {t.type === 'receivable' ? (
+                          {trans.type === 'receivable' ? (
                             <span className="badge badge-success">
                               <ArrowDownLeft size={12} style={{ marginRight: 4 }} />
-                              They Owe Me
+                              {t('positiveBalance')}
                             </span>
                           ) : (
                             <span className="badge badge-danger">
                               <ArrowUpRight size={12} style={{ marginRight: 4 }} />
-                              I Owe Them
+                              {t('negativeBalance')}
                             </span>
                           )}
                         </td>
                         <td>
-                          <span className={`amount ${t.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`}>
-                            {formatCurrency(Number(t.amount))}
+                          <span className={`amount ${trans.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`}>
+                            {formatCurrency(Number(trans.amount))}
                           </span>
                         </td>
                         <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                          {t.description || '—'}
+                          {trans.description || '—'}
                         </td>
                         <td>
                           <div className="table-actions">
-                            <button className="delete-btn" onClick={() => handleDeleteMoney(t.id)}>
+                            <button className="delete-btn" onClick={() => handleDeleteMoney(trans.id)}>
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -284,37 +286,37 @@ function TransactionsContent() {
                   <p>No money transactions yet</p>
                 </div>
               ) : (
-                filteredMoney.map((t) => (
-                  <div key={t.id} className="mobile-card">
+                filteredMoney.map((trans) => (
+                  <div key={trans.id} className="mobile-card">
                     <div className="mobile-card-header">
                       <div>
-                        <div className="mobile-card-title">{getPersonName(t.person_id)}</div>
+                        <div className="mobile-card-title">{getPersonName(trans.person_id)}</div>
                         <div className="mobile-card-subtitle">
-                          <Calendar size={12} /> {formatDate(t.date)}
+                          <Calendar size={12} /> {formatDate(trans.date)}
                         </div>
                       </div>
-                      {t.type === 'receivable' ? (
-                        <span className="badge badge-success">They Owe Me</span>
+                      {trans.type === 'receivable' ? (
+                        <span className="badge badge-success">{t('positiveBalance')}</span>
                       ) : (
-                        <span className="badge badge-danger">I Owe Them</span>
+                        <span className="badge badge-danger">{t('negativeBalance')}</span>
                       )}
                     </div>
                     <div className="mobile-card-body">
                       <div>
-                        <span className={`amount ${t.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`} style={{ fontSize: 18 }}>
-                          {formatCurrency(Number(t.amount))}
+                        <span className={`amount ${trans.type === 'receivable' ? 'amount-positive' : 'amount-negative'}`} style={{ fontSize: 18 }}>
+                          {formatCurrency(Number(trans.amount))}
                         </span>
-                        {t.description && (
+                        {trans.description && (
                           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-                            {t.description}
+                            {trans.description}
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="mobile-card-footer">
-                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>ID: {t.id.slice(0, 8)}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t('id')}: {trans.id.slice(0, 8)}</span>
                       <div className="table-actions">
-                        <button className="delete-btn" onClick={() => handleDeleteMoney(t.id)}>
+                        <button className="delete-btn" onClick={() => handleDeleteMoney(trans.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -331,13 +333,13 @@ function TransactionsContent() {
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Person</th>
-                    <th>Type</th>
-                    <th>Diamond</th>
-                    <th>Qty</th>
-                    <th>Weight</th>
-                    <th>Description</th>
+                    <th>{t('date')}</th>
+                    <th>{t('person')}</th>
+                    <th>{t('type')}</th>
+                    <th>{t('diamond')}</th>
+                    <th>{t('quantity')}</th>
+                    <th>{t('weight')}</th>
+                    <th>{t('description')}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -347,46 +349,46 @@ function TransactionsContent() {
                       <td colSpan={8}>
                         <div className="table-empty">
                           <Diamond size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
-                          <p>No diamond transactions yet</p>
+                          <p>{t('noDiamondTransactions')}</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredDiamonds.map((t) => (
-                      <tr key={t.id}>
+                    filteredDiamonds.map((trans) => (
+                      <tr key={trans.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Calendar size={14} color="var(--text-tertiary)" />
-                            {formatDate(t.date)}
+                            {formatDate(trans.date)}
                           </div>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 500 }}>{getPersonName(t.person_id)}</span>
+                          <span style={{ fontWeight: 500 }}>{getPersonName(trans.person_id)}</span>
                         </td>
                         <td>
-                          {t.type === 'given' ? (
+                          {trans.type === 'given' ? (
                             <span className="badge badge-warning">
                               <ArrowUpRight size={12} style={{ marginRight: 4 }} />
-                              Given
+                              {t('given')}
                             </span>
                           ) : (
                             <span className="badge badge-info">
                               <ArrowDownLeft size={12} style={{ marginRight: 4 }} />
-                              Received
+                              {t('received')}
                             </span>
                           )}
                         </td>
                         <td>
-                          <span className="badge badge-accent">{getDiamondTypeName(t.diamond_type_id)}</span>
+                          <span className="badge badge-accent">{getDiamondTypeName(trans.diamond_type_id)}</span>
                         </td>
-                        <td style={{ fontWeight: 600 }}>{t.quantity}</td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{t.weight ? `${t.weight} ct` : '—'}</td>
+                        <td style={{ fontWeight: 600 }}>{trans.quantity}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{trans.weight ? `${trans.weight} ct` : '—'}</td>
                         <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                          {t.description || '—'}
+                          {trans.description || '—'}
                         </td>
                         <td>
                           <div className="table-actions">
-                            <button className="delete-btn" onClick={() => handleDeleteDiamond(t.id)}>
+                            <button className="delete-btn" onClick={() => handleDeleteDiamond(trans.id)}>
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -403,44 +405,44 @@ function TransactionsContent() {
               {filteredDiamonds.length === 0 ? (
                 <div className="table-empty">
                   <Diamond size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
-                  <p>No diamond transactions yet</p>
+                  <p>{t('noDiamondTransactions')}</p>
                 </div>
               ) : (
-                filteredDiamonds.map((t) => (
-                  <div key={t.id} className="mobile-card">
+                filteredDiamonds.map((trans) => (
+                  <div key={trans.id} className="mobile-card">
                     <div className="mobile-card-header">
                       <div>
-                        <div className="mobile-card-title">{getPersonName(t.person_id)}</div>
+                        <div className="mobile-card-title">{getPersonName(trans.person_id)}</div>
                         <div className="mobile-card-subtitle">
-                          <Calendar size={12} /> {formatDate(t.date)}
+                          <Calendar size={12} /> {formatDate(trans.date)}
                         </div>
                       </div>
-                      {t.type === 'given' ? (
-                        <span className="badge badge-warning">Given</span>
+                      {trans.type === 'given' ? (
+                        <span className="badge badge-warning">{t('given')}</span>
                       ) : (
-                        <span className="badge badge-info">Received</span>
+                        <span className="badge badge-info">{t('received')}</span>
                       )}
                     </div>
                     <div className="mobile-card-body">
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
-                          {t.quantity} pcs
-                          {t.weight ? ` · ${t.weight} ct` : ''}
+                          {trans.quantity} {t('quantity')}
+                          {trans.weight ? ` · ${trans.weight} ct` : ''}
                         </div>
                         <div style={{ marginTop: 4 }}>
-                          <span className="badge badge-accent">{getDiamondTypeName(t.diamond_type_id)}</span>
+                          <span className="badge badge-accent">{getDiamondTypeName(trans.diamond_type_id)}</span>
                         </div>
-                        {t.description && (
+                        {trans.description && (
                           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 8 }}>
-                            {t.description}
+                            {trans.description}
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="mobile-card-footer">
-                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>ID: {t.id.slice(0, 8)}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t('id')}: {trans.id.slice(0, 8)}</span>
                       <div className="table-actions">
-                        <button className="delete-btn" onClick={() => handleDeleteDiamond(t.id)}>
+                        <button className="delete-btn" onClick={() => handleDeleteDiamond(trans.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -494,6 +496,7 @@ function AddMoneyModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useLanguage();
   const [personId, setPersonId] = useState('');
   const [type, setType] = useState<'receivable' | 'payable'>('receivable');
   const [amount, setAmount] = useState('');
@@ -531,20 +534,20 @@ function AddMoneyModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">Add Money Transaction</h3>
+          <h3 className="modal-title">{t('add')} {t('money')} {t('transaction')}</h3>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Person *</label>
+              <label className="form-label">{t('person')} *</label>
               <select className="form-select" value={personId} onChange={(e) => setPersonId(e.target.value)}>
-                <option value="">Select person</option>
+                <option value="">{t('selectPerson')}</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Type *</label>
+              <label className="form-label">{t('type')} *</label>
               <div className="tabs" style={{ width: '100%' }}>
                 <button
                   type="button"
@@ -552,7 +555,7 @@ function AddMoneyModal({
                   style={{ flex: 1 }}
                   onClick={() => setType('receivable')}
                 >
-                  They Owe Me
+                  {t('positiveBalance')}
                 </button>
                 <button
                   type="button"
@@ -560,13 +563,13 @@ function AddMoneyModal({
                   style={{ flex: 1 }}
                   onClick={() => setType('payable')}
                 >
-                  I Owe Them
+                  {t('negativeBalance')}
                 </button>
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Amount (₹) *</label>
+                <label className="form-label">{t('amountInRupees')} *</label>
                 <input
                   type="number"
                   className="form-input"
@@ -578,7 +581,7 @@ function AddMoneyModal({
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Date *</label>
+                <label className="form-label">{t('date')} *</label>
                 <input
                   type="date"
                   className="form-input"
@@ -588,19 +591,19 @@ function AddMoneyModal({
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Description</label>
+              <label className="form-label">{t('description')}</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Optional note..."
+                placeholder={t('optionalNote')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
             <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Add Transaction'}
+                {isSaving ? t('loading') : `${t('add')} ${t('transaction')}`}
               </button>
             </div>
           </form>
@@ -624,6 +627,7 @@ function AddDiamondModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useLanguage();
   const [personId, setPersonId] = useState('');
   const [diamondTypeId, setDiamondTypeId] = useState('');
   const [type, setType] = useState<'given' | 'received'>('given');
@@ -666,22 +670,22 @@ function AddDiamondModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">Add Diamond Transaction</h3>
+          <h3 className="modal-title">{t('add')} {t('diamond')} {t('transaction')}</h3>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Person *</label>
+              <label className="form-label">{t('person')} *</label>
               <select className="form-select" value={personId} onChange={(e) => setPersonId(e.target.value)}>
-                <option value="">Select person</option>
+                <option value="">{t('selectPerson')}</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Diamond Type *</label>
+              <label className="form-label">{t('diamond')} {t('type')} *</label>
               <select className="form-select" value={diamondTypeId} onChange={(e) => setDiamondTypeId(e.target.value)}>
-                <option value="">Select type</option>
+                <option value="">{t('selectType')}</option>
                 {diamondTypes.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}{t.shape ? ` — ${t.shape}` : ''}{t.size ? ` (${t.size})` : ''}
@@ -695,7 +699,7 @@ function AddDiamondModal({
               )}
             </div>
             <div className="form-group">
-              <label className="form-label">Type *</label>
+              <label className="form-label">{t('type')} *</label>
               <div className="tabs" style={{ width: '100%' }}>
                 <button
                   type="button"
@@ -703,7 +707,7 @@ function AddDiamondModal({
                   style={{ flex: 1 }}
                   onClick={() => setType('given')}
                 >
-                  Given (They Have Mine)
+                  {t('given')} ({t('theyHaveMine')})
                 </button>
                 <button
                   type="button"
@@ -711,13 +715,13 @@ function AddDiamondModal({
                   style={{ flex: 1 }}
                   onClick={() => setType('received')}
                 >
-                  Received (I Have Theirs)
+                  {t('received')} ({t('iHaveTheirs')})
                 </button>
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Quantity *</label>
+                <label className="form-label">{t('quantity')} *</label>
                 <input
                   type="number"
                   className="form-input"
@@ -728,11 +732,11 @@ function AddDiamondModal({
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Weight (carats)</label>
+                <label className="form-label">{t('weightInCarats')}</label>
                 <input
                   type="number"
                   className="form-input"
-                  placeholder="Optional"
+                  placeholder={t('neutralBalance')}
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
                   min="0"
@@ -742,7 +746,7 @@ function AddDiamondModal({
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Date *</label>
+                <label className="form-label">{t('date')} *</label>
                 <input
                   type="date"
                   className="form-input"
@@ -751,20 +755,20 @@ function AddDiamondModal({
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Description</label>
+                <label className="form-label">{t('description')}</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Optional note..."
+                  placeholder={t('optionalNote')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </div>
             <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Add Transaction'}
+                {isSaving ? t('loading') : `${t('add')} ${t('transaction')}`}
               </button>
             </div>
           </form>

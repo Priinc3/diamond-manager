@@ -14,16 +14,19 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { href: '/', label: t('dashboard'), icon: LayoutDashboard },
+    { href: '/transactions', label: t('transactions'), icon: ArrowLeftRight },
+    { href: '/settings', label: t('settings'), icon: Settings },
+  ];
 
   const handleSignOut = async () => {
     try {
@@ -39,7 +42,7 @@ export default function Sidebar() {
       <div className="mobile-header">
         <div className="mobile-header-brand">
           <Diamond size={20} strokeWidth={1.5} color="var(--accent)" />
-          <span className="mobile-header-title">Diamond Manager</span>
+          <span className="mobile-header-title">{t('diamondManager')}</span>
         </div>
         <button
           className="mobile-menu-toggle"
@@ -62,7 +65,7 @@ export default function Sidebar() {
               <Diamond size={24} strokeWidth={1.5} />
             </div>
             <div>
-              <h2 className="sidebar-title">Diamond Manager</h2>
+              <h2 className="sidebar-title">{t('diamondManager')}</h2>
               <p className="sidebar-version">v1.0.0</p>
             </div>
           </div>
@@ -110,7 +113,7 @@ export default function Sidebar() {
           )}
           <button onClick={handleSignOut} className="sidebar-logout">
             <LogOut size={18} />
-            <span>Sign Out</span>
+            <span>{t('signOut')}</span>
           </button>
         </div>
       </aside>

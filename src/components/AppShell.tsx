@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();

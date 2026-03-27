@@ -45,8 +45,11 @@ export default function DashboardPage() {
   );
 }
 
+import { useLanguage } from '@/context/LanguageContext';
+
 function DashboardContent() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [people, setPeople] = useState<PersonWithSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -169,7 +172,7 @@ function DashboardContent() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
+        <h1 className="page-title">{t('dashboard')}</h1>
         <p className="page-subtitle">Overview of your diamond business</p>
       </div>
 
@@ -186,7 +189,7 @@ function DashboardContent() {
         </div>
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">They Owe Me</span>
+            <span className="stat-card-label">{t('positiveBalance')}</span>
             <div className="stat-card-icon success">
               <TrendingUp size={20} />
             </div>
@@ -195,7 +198,7 @@ function DashboardContent() {
         </div>
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">I Owe Them</span>
+            <span className="stat-card-label">{t('negativeBalance')}</span>
             <div className="stat-card-icon danger">
               <TrendingDown size={20} />
             </div>
@@ -204,14 +207,14 @@ function DashboardContent() {
         </div>
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">Diamonds Out</span>
+            <span className="stat-card-label">{t('totalDiamondsOut')}</span>
             <div className="stat-card-icon info">
               <Diamond size={20} />
             </div>
           </div>
           <div className="stat-card-value">{totalDiamondsGiven}</div>
           <div className="stat-card-change neutral" style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
-            In: {totalDiamondsReceived} pcs
+            {t('totalDiamondsIn')}: {totalDiamondsReceived} {t('quantity')}
           </div>
         </div>
       </div>
@@ -237,7 +240,7 @@ function DashboardContent() {
                     />
                     <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} />
                     <Tooltip
-                      formatter={(value) => [formatCurrency(Number(value)), 'Net Balance']}
+                      formatter={(value) => [formatCurrency(Number(value)), t('netBalanceByPerson')]}
                       contentStyle={{
                         borderRadius: 12,
                         border: '1px solid #e5e7eb',
@@ -258,7 +261,7 @@ function DashboardContent() {
               </div>
             ) : (
               <div className="table-empty">
-                <p>No balance data yet</p>
+                <p>{t('noBalanceData')}</p>
               </div>
             )}
           </div>
@@ -266,7 +269,7 @@ function DashboardContent() {
 
         <div className="card" style={{ animationDelay: '260ms' }}>
           <div className="card-header">
-            <h3 className="card-title">Quick Summary</h3>
+            <h3 className="card-title">{t('quickSummary')}</h3>
           </div>
           <div className="card-body">
             <div className="net-balance-row" style={{ marginTop: 0 }}>
@@ -309,10 +312,10 @@ function DashboardContent() {
       {/* People Section */}
       <div className="card" style={{ animationDelay: '320ms' }}>
         <div className="card-header">
-          <h3 className="card-title">People ({filteredPeople.length})</h3>
+          <h3 className="card-title">{t('peopleDirectory')} ({filteredPeople.length})</h3>
           <button className="btn btn-primary btn-sm" onClick={() => setShowAddPerson(true)}>
             <Plus size={16} />
-            Add Person
+            {t('addPerson')}
           </button>
         </div>
         <div className="card-body">
@@ -339,7 +342,7 @@ function DashboardContent() {
               <div className="table-empty-icon">
                 <Users size={40} />
               </div>
-              <p>{searchQuery ? 'No people match your search' : 'No people added yet. Add your first contact!'}</p>
+              <p>{searchQuery ? 'No people match your search' : t('noBalanceData')}</p>
             </div>
           ) : (
             <div className="people-grid">
@@ -439,6 +442,7 @@ function PersonModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useLanguage();
   const [name, setName] = useState(person?.name || '');
   const [phone, setPhone] = useState(person?.phone || '');
   const [email, setEmail] = useState(person?.email || '');
@@ -480,7 +484,7 @@ function PersonModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">{person ? 'Edit Person' : 'Add New Person'}</h3>
+          <h3 className="modal-title">{person ? `${t('edit')} ${t('person')}` : `${t('addPerson')}`}</h3>
           <button className="modal-close" onClick={onClose}>
             <X size={18} />
           </button>
@@ -488,7 +492,7 @@ function PersonModal({
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Name *</label>
+              <label className="form-label">{t('person')} *</label>
               <input
                 type="text"
                 className="form-input"
@@ -531,10 +535,10 @@ function PersonModal({
             </div>
             <div className="form-actions">
               <button type="button" className="btn btn-secondary" onClick={onClose}>
-                Cancel
+                {t('cancel')}
               </button>
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
-                {isSaving ? 'Saving...' : person ? 'Update' : 'Add Person'}
+                {isSaving ? t('loading') : person ? t('save') : t('save')}
               </button>
             </div>
           </form>
